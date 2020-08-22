@@ -1,0 +1,33 @@
+version: '2.1' # Use version 2.* because the 3rd version don't have support to depends on with condition health check.
+
+services:
+
+  db:
+    image: mysql # Mysql Image - see documentation on Docker Hub: https://hub.docker.com/_/mysql
+    command: --default-authentication-plugin=mysql_native_password # Command to enable default auth method
+    restart: always # Restart when finish or fail
+    environment: # Environment varables
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: springbootwebapp
+    healthcheck: # Heath check
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+  app: # Our app
+    image: demo:1 # Created image
+    depends_on:
+      db:
+        condition: service_healthy # Only start when db is ready for connections
+    ports:
+    - 8080:8080
+    environment:
+      # Spring boot properties to use database Mysql
+      SPRING_JPA_DATASOURCE: mysql
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/springbootwebapp
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: example
+  adminer: # Database manager (optional)
+    image: adminer
+    restart: always
+    ports:
+      - 8181:8080
